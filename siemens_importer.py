@@ -32,6 +32,9 @@ with open('EvansTestFile.csv', 'r') as csv_file:
             if row[i] != "No Data":
                 array_for_json.append([point_names[i-1], timestamp.timestamp(), row[i]])
 
-    # print(array_for_json)
+    response = requests.post(BASE_URL + "/api/values", json=array_for_json)
 
-    requests.post(BASE_URL + "/api/values", json=array_for_json)
+    if response.status_code == 200:
+        print("Success")
+    else:
+        print(response)
