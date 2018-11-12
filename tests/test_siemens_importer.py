@@ -1,6 +1,6 @@
 import csv
 import unittest
-from siemens_importer import save_point_name_index, arrange_value_tuples
+from importers.siemens_importer import save_point_name_index, arrange_value_tuples
 
 
 class SiemensImporterTests(unittest.TestCase):
@@ -31,7 +31,7 @@ class SiemensImporterTests(unittest.TestCase):
             next(reader)  # empty
             next(reader)  # headers
 
-            self.assertEquals(arrange_value_tuples(reader, point_names),
+            self.assertEqual(arrange_value_tuples(reader, point_names),
                               [['CMC.328.RT', 1514354400.0, '25'],
                                ['CMC.328.SP', 1514354400.0, 'ON'],
                                ['EV.RM107.RT', 1514354400.0, '25'],

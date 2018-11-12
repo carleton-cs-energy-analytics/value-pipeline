@@ -16,7 +16,7 @@ BASE_URL = "http://localhost:5000"
 
 def main():
     # Currently only opens a test file
-    with open('EvansTestFile.csv', 'r') as csv_file:
+    with open('tests/EvansTestFile.csv', 'r') as csv_file:
         reader = csv.reader(csv_file)
         next(reader)  # headers
 
