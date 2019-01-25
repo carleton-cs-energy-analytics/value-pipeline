@@ -6,31 +6,37 @@
     Imports Siemens reports into the database by organizing the data from the given CSV file.
 """
 
+import os
 import csv
 import requests
 import re
 from datetime import datetime
 
 BASE_URL = "http://localhost:5000"
+VALUE_REPORT_DIRECTORY = "/var/data/uploads/siemens"
 
 
 def main():
-    # Currently only opens a test file
-    with open('tests/EvansTestFile.csv', 'r') as csv_file:
-        reader = csv.reader(csv_file)
-        next(reader)  # headers
+    for filename in os.listdir(VALUE_REPORT_DIRECTORY):
+        if ".csv" not in filename:
+            continue
+        if "evans" not in filename:
+            continue
+        with open(os.path.join(VALUE_REPORT_DIRECTORY, filename), 'r') as csv_file:
+            reader = csv.reader(csv_file)
+            next(reader)  # headers
 
-        # Gets the given number associated with a point that the values are indexed on
-        point_names = save_point_name_index(reader)
+            # Gets the given number associated with a point that the values are indexed on
+            point_names = save_point_name_index(reader)
 
-        next(reader)  # Date Range
-        next(reader)  # Report Timings
-        next(reader)  # empty
-        next(reader)  # headers
+            next(reader)  # Date Range
+            next(reader)  # Report Timings
+            next(reader)  # empty
+            next(reader)  # headers
 
-        array_for_json = arrange_value_tuples(reader, point_names)
+            array_for_json = arrange_value_tuples(reader, point_names)
 
-        post_values(array_for_json)
+            post_values(array_for_json)
 
 
 def save_point_name_index(reader):
@@ -54,7 +60,7 @@ def arrange_value_tuples(reader, point_names):
         timestamp = datetime.strptime(row[0] + row[1], '%m/%d/%Y%H:%M:%S')
 
         for i in range(2, len(row)):
-            if row[i] != "No Data":
+            if row[i] != "No Data" and row[i] != "Data Loss":
                 array_for_json.append([point_names[i - 1], timestamp.timestamp(), row[i]])
 
     return array_for_json
