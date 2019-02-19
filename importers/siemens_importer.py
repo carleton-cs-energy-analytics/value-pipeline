@@ -20,8 +20,6 @@ def main():
     for filename in os.listdir(VALUE_REPORT_DIRECTORY):
         if ".csv" not in filename:
             continue
-        if "evans" not in filename:
-            continue
         with open(os.path.join(VALUE_REPORT_DIRECTORY, filename), 'r') as csv_file:
             reader = csv.reader(csv_file)
             next(reader)  # headers
