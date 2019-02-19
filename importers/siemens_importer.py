@@ -69,8 +69,9 @@ def post_values(array_for_json):
     response = requests.post(BASE_URL + "/api/values", json=array_for_json)
 
     if response.status_code == 200:
-        print("Success")
+        print(".", end="")
     else:
+        print()
         print(response)
 
 
