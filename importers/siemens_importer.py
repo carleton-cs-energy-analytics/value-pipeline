@@ -7,13 +7,14 @@
 """
 
 import os
+import sys
 import csv
 import requests
 import re
 from datetime import datetime
 
-BASE_URL = "http://localhost:5000"
-VALUE_REPORT_DIRECTORY = "/var/data/uploads/siemens"
+BASE_URL = os.environ.get("BASE_URL") or "http://localhost:5000"
+VALUE_REPORT_DIRECTORY = os.environ.get("VALUE_REPORT_DIRECTORY") or "/var/data/uploads/siemens"
 
 
 def main():
@@ -21,20 +22,25 @@ def main():
         if ".csv" not in filename:
             continue
         with open(os.path.join(VALUE_REPORT_DIRECTORY, filename), 'r') as csv_file:
-            reader = csv.reader(csv_file)
-            next(reader)  # headers
+            try:
+                reader = csv.reader(csv_file)
+                next(reader)  # headers
 
-            # Gets the given number associated with a point that the values are indexed on
-            point_names = save_point_name_index(reader)
+                # Gets the given number associated with a point that the values are indexed on
+                point_names = save_point_name_index(reader)
 
-            next(reader)  # Date Range
-            next(reader)  # Report Timings
-            next(reader)  # empty
-            next(reader)  # headers
+                next(reader)  # Date Range
+                next(reader)  # Report Timings
+                next(reader)  # empty
+                next(reader)  # headers
 
-            array_for_json = arrange_value_tuples(reader, point_names)
+                array_for_json = arrange_value_tuples(reader, point_names)
 
-            post_values(array_for_json)
+                post_values(array_for_json)
+            except Exception as e:
+                print()
+                print("Exception while reading file:", filename)
+                print(e)
 
 
 def save_point_name_index(reader):
@@ -70,6 +76,7 @@ def post_values(array_for_json):
 
     if response.status_code == 200:
         print(".", end="")
+        sys.stdout.flush()
     else:
         print()
         print(response)
