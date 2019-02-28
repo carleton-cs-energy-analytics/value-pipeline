@@ -1,13 +1,16 @@
 import smtplib
 from email.message import EmailMessage
 import json
+from email.mime.text import MIMEText
+
 import requests
 import datetime
 
 BACKEND_URL = 'http://energycomps.its.carleton.edu:8080/api/'
+FRONTEND_URL = 'http://energycomps.its.carleton.edu:8080/'
 
 
-def get_date():
+def get_date(num_days_before_today):
     """
     Calculates what yesterday's date was using today's date (this is under the assumption we are
     sending it the next morning.
@@ -16,7 +19,7 @@ def get_date():
     """
     current_date = datetime.datetime.now().date()
     # Change the int timedelta takes in to change how many days we want to subtract
-    timedelta = datetime.timedelta(1)
+    timedelta = datetime.timedelta(num_days_before_today)
     return str(current_date - timedelta)
 
 
@@ -35,6 +38,12 @@ def get_anomalous_rules():
         # This is case where the values haven't been imported into the database yet.
         if response.status_code == 404:
             exit(1)
+
+        # Error on the backend, so we will tell them that there was an error.
+        if response.status_code == 500:
+            rule['num_anomalies'] = 0
+            anomalous_rules.append(rule)
+            break
 
         num_anomalies = response.json()
         if num_anomalies > 0:
@@ -57,14 +66,43 @@ def construct_msg_body():
     if len(anomalous_rules) == 0:
         return ''
 
-    msg_body = 'The rules broken yesterday, the number of values that flagged that rule, and the' \
-               'link to view more are as follows.\n\n'
+    msg_body = ''
     for rule in anomalous_rules:
-        print(str(rule))
-        msg_body += rule['rule_name'] + ': ' + str(rule['num_anomalies']) + ' ' + str(
-            rule['url']) + '\n'  # TODO: FIGURE OUT HOW TO GET THE DATE IN HERE
+        msg_body += '<tr>\n<td>' + rule['rule_name'] + '</td>'
+        if rule['num_anomalies'] == 0:
+            msg_body += '<td>Error occurred in the database</td>'
+        else:
+            msg_body += '<td>' + str(rule['num_anomalies']) + '</td> '
 
-    return msg_body
+        # TODO: FIGURE OUT HOW TO GET THE DATE IN THE URL
+        serialized_date = json.dumps({'startDate': get_date(2), 'endDate': get_date(1)})
+        url = FRONTEND_URL[:-1] + str(rule['url'])  # + serialized_date
+        link = '<td><a href="' + url + '">view more</a></td>'
+
+        msg_body += link + '</tr>\n'
+
+    html = """\
+        <html>
+          <head></head>
+          <body>
+            <p>The rules broken yesterday, the number of values that flagged that rule, and the link
+             to view more are as follows.<br><br>
+             <table border="1" cellspacing="0" cellpadding="5">
+                <tr>
+                    <th>Rule Name</th>
+                    <th>Number of Anomalous Values</th>
+                    <th>Link to Dashboard</th>
+                </tr>
+                {code}
+             </table>
+            </p>
+          </body>
+        </html>
+        """.format(code=msg_body)
+    print(html)
+    html_email = MIMEText(html, 'html')
+
+    return html_email
 
 
 def send_email(msg_body):
@@ -80,9 +118,9 @@ def send_email(msg_body):
 
     # Create a text/plain message
     msg = EmailMessage()
-    msg['Subject'] = 'Anomalies detected on ' + get_date()  # Should probably make this better
+    msg['Subject'] = 'Anomalies detected on ' + get_date(1)  # Should probably make this better
     msg['From'] = 'grenche@carleton.edu'  # what address do we send from???
-    msg['To'] = 'grenche@carleton.edu'  # what address do we send to???
+    msg['To'] = 'grenche@carleton.edu'  # energy-analytics.group@carleton.edu when not testing
     msg.set_content(msg_body)
 
     # Is this how we want to do it?
