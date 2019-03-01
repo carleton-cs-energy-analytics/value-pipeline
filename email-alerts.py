@@ -148,7 +148,7 @@ def send_email(msg_body):
     # Is this how we want to do it?
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login(FROM_EMAIL, 'password')  # Don't worry. This is not my real password.
+    server.login(FROM_EMAIL, PASSWORD)  # Don't worry. This is not my real password.
     server.send_message(msg)
 
 
