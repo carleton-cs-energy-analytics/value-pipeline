@@ -1,3 +1,4 @@
+import os
 import smtplib
 import urllib
 from email.message import EmailMessage
@@ -8,8 +9,8 @@ import requests
 import datetime
 import time
 
-BACKEND_URL = 'http://energycomps.its.carleton.edu:80/api/'
-FRONTEND_URL = 'http://energycomps.its.carleton.edu:80/'
+BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
+FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
 
 
 def get_date(num_days_before_today):
