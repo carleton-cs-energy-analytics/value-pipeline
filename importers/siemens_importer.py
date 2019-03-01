@@ -72,7 +72,7 @@ def arrange_value_tuples(reader, point_names):
 
 def post_values(array_for_json):
     # Sends the values to the API in the correct format
-    response = requests.post(BASE_URL + "api/values/add", json=array_for_json)
+    response = requests.post(BASE_URL + "values/add", json=array_for_json)
 
     if response.status_code == 200:
         print(".", end="")
