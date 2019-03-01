@@ -13,7 +13,7 @@ import requests
 import re
 from datetime import datetime
 
-BASE_URL = os.environ.get("BASE_URL") or "http://localhost:5000"
+BASE_URL = os.environ.get("BASE_URL") or "http://energycomps.its.carleton.edu/api/"
 VALUE_REPORT_DIRECTORY = os.environ.get("VALUE_REPORT_DIRECTORY") or "/var/data/uploads/siemens"
 
 
