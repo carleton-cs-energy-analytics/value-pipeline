@@ -1,13 +1,15 @@
 import smtplib
+import urllib
 from email.message import EmailMessage
 import json
 from email.mime.text import MIMEText
 
 import requests
 import datetime
+import time
 
-BACKEND_URL = 'http://energycomps.its.carleton.edu:8080/api/'
-FRONTEND_URL = 'http://energycomps.its.carleton.edu:8080/'
+BACKEND_URL = 'http://energycomps.its.carleton.edu:80/api/'
+FRONTEND_URL = 'http://energycomps.its.carleton.edu:80/'
 
 
 def get_date(num_days_before_today):
@@ -21,6 +23,19 @@ def get_date(num_days_before_today):
     # Change the int timedelta takes in to change how many days we want to subtract
     timedelta = datetime.timedelta(num_days_before_today)
     return str(current_date - timedelta)
+
+
+def get_date_url():
+    current_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Change the int timedelta takes in to change how many days we want to subtract
+    timedelta1 = datetime.timedelta(1)
+    timedelta2 = datetime.timedelta(2)
+    date_object = {'date_range':
+                       {'startDate': time.mktime((current_time - timedelta2).timetuple()) * 1000,
+                        'endDate': time.mktime((current_time - timedelta1).timetuple()) * 1000}
+                   }
+    return urllib.parse.urlencode(date_object)
 
 
 def get_anomalous_rules():
@@ -53,7 +68,24 @@ def get_anomalous_rules():
     return anomalous_rules
 
 
-def construct_msg_body():
+def construct_msg_body(anomalous_rules):
+    msg_body = ''
+    for rule in anomalous_rules:
+        msg_body += '<tr>\n<td>' + rule['rule_name'] + '</td>'
+        if rule['num_anomalies'] == 0:
+            msg_body += '<td>Error occurred in the database</td>'
+        else:
+            msg_body += '<td>' + str(rule['num_anomalies']) + '</td> '
+
+        url = FRONTEND_URL[:-1] + str(rule['url']) + get_date_url()
+        link = '<td><a href="' + url + '">view more</a></td>'
+
+        msg_body += link + '</tr>\n'
+
+    return msg_body
+
+
+def construct_msg_body_as_html():
     """
     Makes the body of the email sent to facilities. Lists out all the rules, the number of values
     that broke that rule, and the link to see the rule in greater context.
@@ -66,20 +98,7 @@ def construct_msg_body():
     if len(anomalous_rules) == 0:
         return ''
 
-    msg_body = ''
-    for rule in anomalous_rules:
-        msg_body += '<tr>\n<td>' + rule['rule_name'] + '</td>'
-        if rule['num_anomalies'] == 0:
-            msg_body += '<td>Error occurred in the database</td>'
-        else:
-            msg_body += '<td>' + str(rule['num_anomalies']) + '</td> '
-
-        # TODO: FIGURE OUT HOW TO GET THE DATE IN THE URL
-        serialized_date = json.dumps({'startDate': get_date(2), 'endDate': get_date(1)})
-        url = FRONTEND_URL[:-1] + str(rule['url'])  # + serialized_date
-        link = '<td><a href="' + url + '">view more</a></td>'
-
-        msg_body += link + '</tr>\n'
+    msg_body = construct_msg_body(anomalous_rules)
 
     html = """\
         <html>
@@ -99,7 +118,7 @@ def construct_msg_body():
           </body>
         </html>
         """.format(code=msg_body)
-    print(html)
+
     html_email = MIMEText(html, 'html')
 
     return html_email
@@ -116,7 +135,6 @@ def send_email(msg_body):
     if msg_body == '':
         return
 
-    # Create a text/plain message
     msg = EmailMessage()
     msg['Subject'] = 'Anomalies detected on ' + get_date(1)  # Should probably make this better
     msg['From'] = 'grenche@carleton.edu'  # what address do we send from???
@@ -131,7 +149,7 @@ def send_email(msg_body):
 
 
 def main():
-    send_email(construct_msg_body())
+    send_email(construct_msg_body_as_html())
 
 
 if __name__ == '__main__':
