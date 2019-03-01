@@ -11,6 +11,9 @@ import time
 
 BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
 FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
+FROM_EMAIL = os.environ.get("FROM_EMAIL") or 'energycomps2019@gmail.com'
+TO_EMAIL = os.environ.get("TO_EMAIL") or 'grenche@carleton.edu'
+PASSWORD = os.environ.get("PASSWORD")
 
 
 def get_date(num_days_before_today):
@@ -138,14 +141,14 @@ def send_email(msg_body):
 
     msg = EmailMessage()
     msg['Subject'] = 'Anomalies detected on ' + get_date(1)  # Should probably make this better
-    msg['From'] = 'energycomps2019@gmail.com'  # what address do we send from???
-    msg['To'] = 'grenche@carleton.edu'  # energy-analytics.group@carleton.edu when not testing
+    msg['From'] = FROM_EMAIL
+    msg['To'] = TO_EMAIL  # energy-analytics.group@carleton.edu when not testing
     msg.set_content(msg_body)
 
     # Is this how we want to do it?
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login('energycomps2019@gmail.com', 'password')  # Don't worry. This is not my real password.
+    server.login(FROM_EMAIL, 'password')  # Don't worry. This is not my real password.
     server.send_message(msg)
 
 
