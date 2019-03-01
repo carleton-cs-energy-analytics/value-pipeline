@@ -138,14 +138,14 @@ def send_email(msg_body):
 
     msg = EmailMessage()
     msg['Subject'] = 'Anomalies detected on ' + get_date(1)  # Should probably make this better
-    msg['From'] = 'grenche@carleton.edu'  # what address do we send from???
+    msg['From'] = 'energycomps2019@gmail.com'  # what address do we send from???
     msg['To'] = 'grenche@carleton.edu'  # energy-analytics.group@carleton.edu when not testing
     msg.set_content(msg_body)
 
     # Is this how we want to do it?
-    server = smtplib.SMTP('smtp.carleton.edu', 587)
+    server = smtplib.SMTP('smtp.gmail.com', 587)
     server.starttls()
-    server.login('grenche@carleton.edu', 'password')  # Don't worry. This is not my real password.
+    server.login('energycomps2019@gmail.com', 'password')  # Don't worry. This is not my real password.
     server.send_message(msg)
 
 
