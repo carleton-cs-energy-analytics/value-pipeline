@@ -20,8 +20,9 @@ ARCHIVE_DIRECTORY = os.environ.get("ARCHIVE_DIRECTORY") or "/var/data/uploads/si
 
 def main():
     filenames = os.listdir(VALUE_REPORT_DIRECTORY)
-    all = sys.argv[1] == 'all'
-    if all:
+
+    include_archive = len(sys.argv) > 0 and sys.argv[1] == 'all'
+    if include_archive:
         filenames += os.listdir(ARCHIVE_DIRECTORY)
 
     for filename in filenames:
@@ -43,7 +44,7 @@ def main():
                 array_for_json = arrange_value_tuples(reader, point_names)
 
                 success = post_values(array_for_json)
-                if success and not all:
+                if success and not include_archive:
                     os.rename(os.path.join(VALUE_REPORT_DIRECTORY, filename),
                               os.path.join(ARCHIVE_DIRECTORY, filename))
             except Exception as e:
