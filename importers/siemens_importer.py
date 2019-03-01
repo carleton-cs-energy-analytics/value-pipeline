@@ -21,7 +21,7 @@ ARCHIVE_DIRECTORY = os.environ.get("ARCHIVE_DIRECTORY") or "/var/data/uploads/si
 def main():
     filenames = os.listdir(VALUE_REPORT_DIRECTORY)
 
-    include_archive = len(sys.argv) > 0 and sys.argv[1] == 'all'
+    include_archive = len(sys.argv) > 1 and sys.argv[1] == 'all'
     if include_archive:
         filenames += os.listdir(ARCHIVE_DIRECTORY)
 
