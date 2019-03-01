@@ -15,10 +15,16 @@ from datetime import datetime
 
 BASE_URL = os.environ.get("BASE_URL") or "http://energycomps.its.carleton.edu/api/"
 VALUE_REPORT_DIRECTORY = os.environ.get("VALUE_REPORT_DIRECTORY") or "/var/data/uploads/siemens"
+ARCHIVE_DIRECTORY = os.environ.get("ARCHIVE_DIRECTORY") or "/var/data/uploads/siemens/archive"
 
 
 def main():
-    for filename in os.listdir(VALUE_REPORT_DIRECTORY):
+    filenames = os.listdir(VALUE_REPORT_DIRECTORY)
+    all = sys.argv[1] == 'all'
+    if all:
+        filenames += os.listdir(ARCHIVE_DIRECTORY)
+
+    for filename in filenames:
         if ".csv" not in filename:
             continue
         with open(os.path.join(VALUE_REPORT_DIRECTORY, filename), 'r') as csv_file:
@@ -36,7 +42,10 @@ def main():
 
                 array_for_json = arrange_value_tuples(reader, point_names)
 
-                post_values(array_for_json)
+                success = post_values(array_for_json)
+                if success and not all:
+                    os.rename(os.path.join(VALUE_REPORT_DIRECTORY, filename),
+                              os.path.join(ARCHIVE_DIRECTORY, filename))
             except Exception as e:
                 print()
                 print("Exception while reading file:", filename)
@@ -77,9 +86,11 @@ def post_values(array_for_json):
     if response.status_code == 200:
         print(".", end="")
         sys.stdout.flush()
+        return True
     else:
         print()
         print(response)
+        return False
 
 
 if __name__ == "__main__":
