@@ -12,6 +12,8 @@ import csv
 import requests
 import re
 from datetime import datetime
+import glob
+import itertools
 
 BASE_URL = os.environ.get("BASE_URL") or "http://energycomps.its.carleton.edu/api/"
 VALUE_REPORT_DIRECTORY = os.environ.get("VALUE_REPORT_DIRECTORY") or "/var/data/uploads/siemens"
@@ -19,16 +21,14 @@ ARCHIVE_DIRECTORY = os.environ.get("ARCHIVE_DIRECTORY") or "/var/data/uploads/si
 
 
 def main():
-    filenames = os.listdir(VALUE_REPORT_DIRECTORY)
-
+    file_iterator = glob.iglob(os.path.join(VALUE_REPORT_DIRECTORY, "*.csv"))
     include_archive = len(sys.argv) > 1 and sys.argv[1] == 'all'
     if include_archive:
-        filenames += os.listdir(ARCHIVE_DIRECTORY)
+        file_iterator = itertools.chain(file_iterator,
+                                        glob.iglob(os.path.join(ARCHIVE_DIRECTORY, "*.csv")))
 
-    for filename in filenames:
-        if ".csv" not in filename:
-            continue
-        with open(os.path.join(VALUE_REPORT_DIRECTORY, filename), 'r') as csv_file:
+    for filename in file_iterator:
+        with open(filename, 'r') as csv_file:
             try:
                 reader = csv.reader(csv_file)
                 next(reader)  # headers
@@ -45,8 +45,7 @@ def main():
 
                 success = post_values(array_for_json)
                 if success and not include_archive:
-                    os.rename(os.path.join(VALUE_REPORT_DIRECTORY, filename),
-                              os.path.join(ARCHIVE_DIRECTORY, filename))
+                    os.system('mv %s %s' % (filename, ARCHIVE_DIRECTORY))
             except Exception as e:
                 print()
                 print("Exception while reading file:", filename)
@@ -86,6 +85,10 @@ def post_values(array_for_json):
 
     if response.status_code == 200:
         print(".", end="")
+        sys.stdout.flush()
+        return True
+    elif response.status_code == 204:
+        print("!", end="")
         sys.stdout.flush()
         return True
     else:
