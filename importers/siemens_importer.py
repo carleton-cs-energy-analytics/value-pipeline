@@ -93,7 +93,7 @@ def post_values(array_for_json):
         return True
     else:
         print()
-        print(response)
+        print(response, end="")
         return False
 
 
