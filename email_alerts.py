@@ -10,7 +10,8 @@ import subprocess
 BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
 FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
 FROM_EMAIL = os.environ.get("FROM_EMAIL") or 'energycomps2019@gmail.com'
-TO_EMAIL = os.environ.get("TO_EMAIL") or 'grenche@carleton.edu' # energy-analytics.group@carleton.edu when not testing
+TO_EMAIL = os.environ.get(
+    "TO_EMAIL") or 'grenche@carleton.edu'  # energy-analytics.group@carleton.edu when not testing
 PASSWORD = os.environ.get("PASSWORD")
 
 
@@ -102,7 +103,7 @@ def construct_msg_body_as_html():
 
     msg_body = construct_msg_body(anomalous_rules)
 
-    html = """\
+    html = """
         <html>
           <head></head>
           <body>
@@ -121,9 +122,7 @@ def construct_msg_body_as_html():
         </html>
         """.format(code=msg_body)
 
-    html_email = MIMEText(html, 'html')
-
-    return html_email
+    return html
 
 
 def send_email(msg_body):
@@ -138,9 +137,11 @@ def send_email(msg_body):
         return
 
     try:
-        process = subprocess.Popen(['mail', '-s', 'Anomalies detected on ' + get_date(1), TO_EMAIL],
-                               stdin=subprocess.PIPE)
-        process.communicate(msg_body)
+        process = subprocess.Popen(
+            ['mail', '-a', '\'Content-Type: text\html\'', '-s', 'Anomalies detected on ' + get_date(1),
+             TO_EMAIL], stdin=subprocess.PIPE)
+        process.communicate(input=msg_body.encode('utf-8'))
+
     except Exception as error:
         print(error)
 
