@@ -1,19 +1,15 @@
 import os
 import urllib
-import json
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from email.message import EmailMessage
 import requests
 import datetime
 import time
-import subprocess
 
 BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
 FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
-FROM_EMAIL = os.environ.get("FROM_EMAIL") or 'energycomps2019@gmail.com'
 TO_EMAIL = os.environ.get(
     "TO_EMAIL") or 'grenche@carleton.edu'  # energy-analytics.group@carleton.edu when not testing
-PASSWORD = os.environ.get("PASSWORD")
 
 
 def get_date(num_days_before_today):
@@ -33,8 +29,9 @@ def get_date_url():
     current_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Change the int timedelta takes in to change how many days we want to subtract
-    timedelta1 = datetime.timedelta(1)
-    timedelta2 = datetime.timedelta(2)
+    timedelta1 = datetime.timedelta(days=1)
+    timedelta2 = datetime.timedelta(days=2)
+
     date_object = {'date_range':
                        {'startDate': time.mktime((current_time - timedelta2).timetuple()) * 1000,
                         'endDate': time.mktime((current_time - timedelta1).timetuple()) * 1000}
@@ -72,21 +69,28 @@ def get_anomalous_rules():
     return anomalous_rules
 
 
-def construct_msg_body(anomalous_rules):
-    msg_body = ''
+def construct_anomalies_table(anomalous_rules):
+    """
+    Gets all the relevant information for constructing the table in the message by getting the rule
+    name, count, and link for each rule.
+
+    :param anomalous_rules: The list of rules that actually have anomalies associated with them.
+    :return: The html codes that will be the table (and main sources of information) in the email.
+    """
+    anomalies_table = ''
     for rule in anomalous_rules:
-        msg_body += '<tr>\n<td>' + rule['rule_name'] + '</td>'
+        anomalies_table += '<tr>\n<td>' + rule['rule_name'] + '</td>'
         if rule['num_anomalies'] == 0:
-            msg_body += '<td>Error occurred in the database</td>'
+            anomalies_table += '<td>Error occurred in the database</td>'
         else:
-            msg_body += '<td>' + str(rule['num_anomalies']) + '</td> '
+            anomalies_table += '<td>' + str(rule['num_anomalies']) + '</td> '
 
         url = FRONTEND_URL[:-1] + str(rule['url']) + get_date_url()
         link = '<td><a href="' + url + '">view more</a></td>'
 
-        msg_body += link + '</tr>\n'
+        anomalies_table += link + '</tr>\n'
 
-    return msg_body
+    return anomalies_table
 
 
 def construct_msg_body_as_html():
@@ -102,7 +106,7 @@ def construct_msg_body_as_html():
     if len(anomalous_rules) == 0:
         return ''
 
-    msg_body = construct_msg_body(anomalous_rules)
+    anomalies_table = construct_anomalies_table(anomalous_rules)
 
     html = """
         <html>
@@ -121,7 +125,7 @@ def construct_msg_body_as_html():
             </p>
           </body>
         </html>
-        """.format(code=msg_body)
+        """.format(code=anomalies_table)
 
     html_email = MIMEText(html, 'html')
 
@@ -137,20 +141,19 @@ def send_email(msg_body):
     """
     # In this case, no anomalies were found, so we should not send the email.
     if msg_body == '':
-        print('no email sent')
+        print('No email was sent because there were no anomalies.')
         return
 
-    message = MIMEMultipart('alternative')
-    message.add_header('Subject', 'Anomalies detected on ' + get_date(1))
-    # add a few more add_header calls here for things like "To", "Cc", "From"
-    message.attach(MIMEText('some code'))  # plain text alternative
-    message.attach(msg_body)
+    message = EmailMessage()
+    message['Subject'] = 'Anomalies detected on ' + get_date(1)
+    message.set_content(msg_body)
 
     # pipe the mail to sendmail
-    sendmail = os.popen('sendmail grenche@carleton.edu', 'w')
+    sendmail = os.popen('sendmail ' + TO_EMAIL, 'w')
     sendmail.write(message.as_string())
+
     if sendmail.close() is not None:
-        print('error: failed to send mail :-(')
+        print('Error: Failed to send email.')
 
 
 def main():
