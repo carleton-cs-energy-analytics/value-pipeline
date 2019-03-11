@@ -1,13 +1,11 @@
 import os
-import smtplib
 import urllib
-from email.message import EmailMessage
 import json
 from email.mime.text import MIMEText
-
 import requests
 import datetime
 import time
+import subprocess
 
 BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
 FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
@@ -139,17 +137,12 @@ def send_email(msg_body):
     if msg_body == '':
         return
 
-    msg = EmailMessage()
-    msg['Subject'] = 'Anomalies detected on ' + get_date(1)  # Should probably make this better
-    msg['From'] = FROM_EMAIL
-    msg['To'] = TO_EMAIL
-    msg.set_content(msg_body)
-
-    # Is this how we want to do it?
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(FROM_EMAIL, PASSWORD)
-    server.send_message(msg)
+    try:
+        process = subprocess.Popen(['mail', '-s', 'Anomalies detected on ' + get_date(1), TO_EMAIL],
+                               stdin=subprocess.PIPE)
+        process.communicate(msg_body)
+    except Exception as error:
+        print(error)
 
 
 def main():
