@@ -2,6 +2,7 @@ import os
 import urllib
 import json
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import requests
 import datetime
 import time
@@ -122,7 +123,9 @@ def construct_msg_body_as_html():
         </html>
         """.format(code=msg_body)
 
-    return html
+    html_email = MIMEText(html, 'html')
+
+    return html_email
 
 
 def send_email(msg_body):
@@ -134,16 +137,20 @@ def send_email(msg_body):
     """
     # In this case, no anomalies were found, so we should not send the email.
     if msg_body == '':
+        print('no email sent')
         return
 
-    try:
-        process = subprocess.Popen(
-            ['mail', '-a', '\'Content-Type: text\html\'', '-s', 'Anomalies detected on ' + get_date(1),
-             TO_EMAIL], stdin=subprocess.PIPE)
-        process.communicate(input=msg_body.encode('utf-8'))
+    message = MIMEMultipart('alternative')
+    message.add_header('Subject', 'Anomalies detected on ' + get_date(1))
+    # add a few more add_header calls here for things like "To", "Cc", "From"
+    message.attach(MIMEText('some code'))  # plain text alternative
+    message.attach(msg_body)
 
-    except Exception as error:
-        print(error)
+    # pipe the mail to sendmail
+    sendmail = os.popen('sendmail grenche@carleton.edu', 'w')
+    sendmail.write(message.as_string())
+    if sendmail.close() is not None:
+        print('error: failed to send mail :-(')
 
 
 def main():
