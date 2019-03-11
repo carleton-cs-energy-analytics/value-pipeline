@@ -9,7 +9,7 @@ import time
 BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
 FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
 TO_EMAIL = os.environ.get(
-    "TO_EMAIL") or 'grenche@carleton.edu'  # energy-analytics.group@carleton.edu when not testing
+    "TO_EMAIL") or 'energy-analytics.group@carleton.edu'
 
 
 def get_date(num_days_before_today):
