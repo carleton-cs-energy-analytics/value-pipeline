@@ -1,5 +1,5 @@
 import os
-import urllib
+import urllib.parse
 from email.mime.text import MIMEText
 from email.message import EmailMessage
 import requests
@@ -32,11 +32,13 @@ def get_date_url():
     timedelta1 = datetime.timedelta(days=1)
     timedelta2 = datetime.timedelta(days=2)
 
-    date_object = {'date_range':
-                       {'startDate': time.mktime((current_time - timedelta2).timetuple()) * 1000,
-                        'endDate': time.mktime((current_time - timedelta1).timetuple()) * 1000}
-                   }
-    return urllib.parse.urlencode(date_object)
+    start_date = str(int(time.mktime((current_time - timedelta2).timetuple())) * 1000)
+    end_date = str(int(time.mktime((current_time - timedelta1).timetuple())) * 1000)
+
+    date_as_javascript_ecoded_url = '&date_range%5BstartDate%5D=' + start_date +\
+                                    '&date_range%5BendDate%5D=' + end_date
+
+    return date_as_javascript_ecoded_url
 
 
 def get_anomalous_rules():
