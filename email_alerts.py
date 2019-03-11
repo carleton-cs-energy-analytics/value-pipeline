@@ -9,7 +9,7 @@ import time
 BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
 FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
 TO_EMAIL = os.environ.get(
-    "TO_EMAIL") or 'energy-analytics.group@carleton.edu'
+    "TO_EMAIL") or 'grenche@carleton.edu'#'energy-analytics.group@carleton.edu'
 
 
 def get_date(num_days_before_today):
@@ -29,11 +29,10 @@ def get_date_url():
     current_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Change the int timedelta takes in to change how many days we want to subtract
-    timedelta1 = datetime.timedelta(days=1)
-    timedelta2 = datetime.timedelta(days=2)
+    timedelta = datetime.timedelta(days=1)
 
-    start_date = str(int(time.mktime((current_time - timedelta2).timetuple())) * 1000)
-    end_date = str(int(time.mktime((current_time - timedelta1).timetuple())) * 1000)
+    start_date = str(int(time.mktime((current_time - timedelta).timetuple())) * 1000)
+    end_date = str(int(time.mktime((current_time).timetuple())) * 1000)
 
     date_as_javascript_ecoded_url = '&date_range%5BstartDate%5D=' + start_date +\
                                     '&date_range%5BendDate%5D=' + end_date
