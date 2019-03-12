@@ -1,5 +1,13 @@
+"""
+    email_alerts.py
+    Eva Grench, 22 February  2018
+
+    Sends an html email from the server with a table of all the rules that had anomalous values, the
+    number of anomalous values under that rule, and a link to view the results on the anomalies
+    dashboard. It is sent to a google group.
+"""
+
 import os
-import urllib.parse
 from email.mime.text import MIMEText
 from email.message import EmailMessage
 import requests
@@ -8,8 +16,7 @@ import time
 
 BACKEND_URL = os.environ.get("BASE_URL") or 'http://energycomps.its.carleton.edu/api/'
 FRONTEND_URL = 'http://energycomps.its.carleton.edu/'
-TO_EMAIL = os.environ.get(
-    "TO_EMAIL") or 'energy-analytics.group@carleton.edu'
+TO_EMAIL = os.environ.get("TO_EMAIL") or 'energy-analytics.group@carleton.edu'
 
 
 def get_date(num_days_before_today):
@@ -26,6 +33,13 @@ def get_date(num_days_before_today):
 
 
 def get_date_url():
+    """
+    Encodes the date range so that when the user clicks the link they are taken to the relevant
+    results page. Currently this is manually done which is not great, but is because they do it
+    differently in Python.
+
+    :return: The (javascript style) encoded date range as a string
+    """
     current_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Change the int timedelta takes in to change how many days we want to subtract
@@ -43,7 +57,7 @@ def get_date_url():
 def get_anomalous_rules():
     """
     Gets all the rules and then finds all the rules for which a value flagged that rule and puts it
-    in a list
+    in a list.
 
     :return: The list of rules that were broken yesterday
     """
