@@ -164,7 +164,7 @@ def send_email(msg_body):
     message.set_content(msg_body)
 
     # pipe the mail to sendmail
-    sendmail = os.popen('sendmail ' + TO_EMAIL, 'w')
+    sendmail = os.popen('/usr/sbin/sendmail ' + TO_EMAIL, 'w')
     sendmail.write(message.as_string())
 
     if sendmail.close() is not None:
