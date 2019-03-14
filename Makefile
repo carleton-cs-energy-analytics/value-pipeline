@@ -1,4 +1,7 @@
-.PHONY: run
+.PHONY: run email
 
 run:
-	BASE_URL="http://energycomps.its.carleton.edu" python3 importers/siemens_importer.py
+	python3 importers/siemens_importer.py
+
+email: run
+	TO_EMAIL="git@alextdavis.me" python3 email_alerts.py
