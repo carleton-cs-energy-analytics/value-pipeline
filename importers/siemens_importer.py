@@ -35,7 +35,11 @@ def main():
         file_iterator = itertools.chain(file_iterator,
                                         glob.iglob(os.path.join(ARCHIVE_DIRECTORY, "*.csv")))
 
+    i = 0
     for filename in file_iterator:
+        i += 1 
+        if i >50:
+            break
         with open(filename, 'r') as csv_file:
             try:
                 reader = csv.reader(csv_file)
@@ -118,15 +122,15 @@ def post_values(array_for_json):
     response = requests.post(BASE_URL + "values/add", json=array_for_json)
 
     if response.status_code == 200:  # Imported normally
-        print(".", end="")
+        print("success.", end="")
         sys.stdout.flush()
         return True
     elif response.status_code == 204:  # The file was already imported
-        print("!", end="")
+        print("file already exists!", end="")
         sys.stdout.flush()
         return True
     else:
-        print()
+        print("error" )
         print(response, end="")
         return False
 
