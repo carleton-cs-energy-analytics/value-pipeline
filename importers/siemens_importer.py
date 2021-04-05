@@ -18,7 +18,7 @@ import itertools
 BASE_URL = os.environ.get("BASE_URL") or "http://energycomps.its.carleton.edu/api/"
 VALUE_REPORT_DIRECTORY = os.environ.get("VALUE_REPORT_DIRECTORY") or "/var/data/uploads/siemens"
 ARCHIVE_DIRECTORY = os.environ.get("ARCHIVE_DIRECTORY") or "/var/data/uploads/siemens/archive"
-
+ARCHIVE_WEIRD_DIRECTORY = os.environ.get("ARCHIVE_WEIRD_DIRECTORY") or "/var/data/uploads/siemens/archive-weird"
 
 def main():
     """
@@ -35,11 +35,8 @@ def main():
         file_iterator = itertools.chain(file_iterator,
                                         glob.iglob(os.path.join(ARCHIVE_DIRECTORY, "*.csv")))
 
-    i = 0
     for filename in file_iterator:
-        i += 1 
-        if i >50:
-            break
+        print(filename, file=sys.stderr)
         with open(filename, 'r') as csv_file:
             try:
                 reader = csv.reader(csv_file)
@@ -59,8 +56,10 @@ def main():
                 success = post_values(array_for_json)
                 # If is was successful and we are not reseeding, we want to move the files to the
                 # archives folder so we aren't trying to reimport them every day.
-                if success and not include_archive:
+                if success[0] and not include_archive:
                     os.system('mv %s %s' % (filename, ARCHIVE_DIRECTORY))
+                if success[1] and not include_archive:
+                    os.system('mv %s %s' % (filename, ARCHIVE_WEIRD_DIRECTORY))
             except Exception as e:
                 print()
                 print("Exception while reading file:", filename)
@@ -122,17 +121,21 @@ def post_values(array_for_json):
     response = requests.post(BASE_URL + "values/add", json=array_for_json)
 
     if response.status_code == 200:  # Imported normally
-        print("success.", end="")
+        print("success", end="")
         sys.stdout.flush()
-        return True
+        return [True, False]
     elif response.status_code == 204:  # The file was already imported
         print("file already exists!", end="")
         sys.stdout.flush()
-        return True
+        return [True, False]
+    elif response.status_code == 206: # The file had no datapoints in it
+        print("file had no points!", end="")
+        sys.stdout.flush()
+        return [False, True]
     else:
-        print("error" )
+        print("an error occured. Check backend logs")
         print(response, end="")
-        return False
+        return [False, False]
 
 
 if __name__ == "__main__":
